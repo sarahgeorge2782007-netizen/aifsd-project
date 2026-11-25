@@ -1,0 +1,315 @@
+from pathlib import Path
+import zipfile, textwrap
+
+base = Path("/mnt/data/queue_token_generator")
+base.mkdir(exist_ok=True)
+
+html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QueueEase | Smart Token System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#"><span class="brand-mark">Q</span> QueueEase</a>
+      <span class="navbar-text">Campus Service Desk</span>
+    </div>
+  </nav>
+
+  <main class="container py-4 py-lg-5">
+    <section class="hero mb-4">
+      <div>
+        <p class="eyebrow mb-2">SMART QUEUE MANAGEMENT</p>
+        <h1 class="mb-2">Skip the crowd.<br><span>Keep your place.</span></h1>
+        <p class="hero-copy mb-0">Generate a token and follow the live queue at your campus help desk.</p>
+      </div>
+      <div class="hero-icon" aria-hidden="true">⌁</div>
+    </section>
+
+    <section class="row g-4">
+      <div class="col-lg-5">
+        <div class="panel h-100">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow mb-1">GET STARTED</p>
+              <h2 class="h4 mb-0">Take a token</h2>
+            </div>
+            <span class="soft-icon">＋</span>
+          </div>
+          <label for="service" class="form-label mt-4">Choose a service</label>
+          <select id="service" class="form-select">
+            <option value="General Enquiry">General Enquiry</option>
+            <option value="IT Support">IT Support</option>
+            <option value="Fee Counter">Fee Counter</option>
+            <option value="Student Records">Student Records</option>
+          </select>
+          <button id="generateBtn" class="btn btn-primary w-100 mt-3">Generate my token <span aria-hidden="true">→</span></button>
+          <div id="ticketResult" class="ticket-result mt-4 d-none" aria-live="polite">
+            <p class="eyebrow mb-1">YOUR TOKEN NUMBER</p>
+            <div class="ticket-number" id="newToken">A001</div>
+            <p class="mb-1" id="ticketService">General Enquiry</p>
+            <small class="text-muted" id="ticketTime"></small>
+          </div>
+          <p class="hint mt-3 mb-0">Your token is added to the waiting list automatically.</p>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="current-card mb-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="eyebrow mb-1">NOW SERVING</p>
+              <h2 class="h5 mb-0 text-white">Current token</h2>
+            </div>
+            <span class="live-pill"><span></span> LIVE QUEUE</span>
+          </div>
+          <div class="current-number" id="currentToken">— — —</div>
+          <div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
+            <div>
+              <div class="current-service" id="currentService">No token being served</div>
+              <small class="current-sub">Please wait for your number to be called.</small>
+            </div>
+            <button id="nextBtn" class="btn btn-light next-btn">Call next <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="queue-heading">
+            <div>
+              <p class="eyebrow mb-1">UP NEXT</p>
+              <h2 class="h4 mb-0">Waiting queue</h2>
+            </div>
+            <span class="waiting-count"><strong id="waitingCount">0</strong> waiting</span>
+          </div>
+          <div id="queueList" class="queue-list mt-3">
+            <div class="empty-state">
+              <div class="empty-icon">✓</div>
+              <strong>All clear!</strong>
+              <p class="mb-0">There are no tokens waiting right now.</p>
+            </div>
+          </div>
+          <div class="queue-footer">
+            <span>Queue updates when a token is generated or called.</span>
+            <button id="resetBtn" class="btn btn-link btn-sm">Reset demo</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="text-center mt-5">QueueEase · A front-end classroom prototype · Demo data only</footer>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
+"""
+
+css = """:root {
+  --ink: #17233d;
+  --muted: #71809a;
+  --blue: #315efb;
+  --pale: #f3f6ff;
+  --line: #e9edf5;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #f7f8fc; color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.navbar { background: #fff; border-bottom: 1px solid var(--line); }
+.navbar-brand { color: var(--ink); letter-spacing: -.4px; }
+.brand-mark {
+  display: inline-grid; place-items: center; width: 31px; height: 31px;
+  margin-right: 7px; border-radius: 10px; background: var(--blue); color: #fff;
+}
+.navbar-text { color: var(--muted); font-size: .9rem; }
+.hero {
+  background: #eaf0ff; border-radius: 24px; padding: 34px 38px;
+  display: flex; align-items: center; justify-content: space-between; overflow: hidden;
+}
+.eyebrow { color: var(--blue); font-size: .7rem; font-weight: 800; letter-spacing: 1.5px; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.3rem); line-height: 1.04; font-weight: 800; letter-spacing: -2px; }
+.hero h1 span { color: var(--blue); }
+.hero-copy { color: #63718c; max-width: 470px; }
+.hero-icon { font-size: 8rem; line-height: 1; color: #c6d3ff; transform: rotate(-20deg); margin-right: 35px; }
+.panel {
+  background: #fff; border: 1px solid var(--line); border-radius: 20px;
+  padding: 25px; box-shadow: 0 8px 28px rgba(29, 48, 91, .035);
+}
+.panel-heading, .queue-heading { display: flex; align-items: center; justify-content: space-between; }
+.soft-icon {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px;
+  color: var(--blue); background: var(--pale); font-size: 1.5rem;
+}
+.form-label { font-size: .88rem; font-weight: 650; }
+.form-select { min-height: 48px; border-color: #dfe5f0; border-radius: 12px; }
+.btn-primary { background: var(--blue); border-color: var(--blue); min-height: 49px; border-radius: 12px; font-weight: 700; }
+.btn-primary:hover { background: #244de0; border-color: #244de0; }
+.ticket-result { text-align: center; background: #f4f7ff; border: 1px dashed #aebfff; border-radius: 16px; padding: 17px; }
+.ticket-number { color: var(--blue); font-size: 2.6rem; line-height: 1.1; font-weight: 850; letter-spacing: 2px; }
+.hint { color: var(--muted); font-size: .78rem; }
+.current-card {
+  background: linear-gradient(135deg, #1e2e55, #315efb); border-radius: 20px;
+  padding: 25px 28px; color: white; box-shadow: 0 12px 28px rgba(49, 94, 251, .16);
+}
+.current-card .eyebrow { color: #b9c8ff; }
+.live-pill { font-size: .65rem; letter-spacing: 1px; font-weight: 800; background: rgba(255,255,255,.13); padding: 7px 10px; border-radius: 30px; }
+.live-pill span { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #70edb0; margin-right: 5px; }
+.current-number { font-size: clamp(3rem, 8vw, 4.8rem); font-weight: 850; letter-spacing: 3px; line-height: 1.25; margin: 12px 0; }
+.current-service { font-weight: 700; }
+.current-sub { color: #c5d0ef; }
+.next-btn { border-radius: 11px; padding: 10px 17px; color: #244de0; font-weight: 750; }
+.next-btn:disabled { opacity: .55; }
+.waiting-count { background: var(--pale); color: var(--blue); border-radius: 30px; padding: 7px 12px; font-size: .78rem; }
+.queue-list { display: grid; gap: 10px; }
+.queue-item {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 13px 14px; border: 1px solid var(--line); border-radius: 13px;
+}
+.queue-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.queue-token { color: var(--blue); background: var(--pale); padding: 8px 10px; border-radius: 9px; font-weight: 800; font-size: .85rem; }
+.queue-service { font-weight: 700; font-size: .9rem; }
+.queue-time { color: var(--muted); font-size: .74rem; }
+.queue-position { color: var(--muted); font-size: .75rem; white-space: nowrap; }
+.empty-state { text-align: center; color: var(--muted); padding: 25px 10px; font-size: .85rem; }
+.empty-state strong { display: block; color: var(--ink); margin: 8px 0 3px; }
+.empty-icon { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: #eafaf2; color: #1eaa68; font-size: 1.2rem; }
+.queue-footer { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--muted); font-size: .72rem; }
+.queue-footer .btn { color: #7a879d; text-decoration: none; }
+footer { color: #98a2b5; font-size: .75rem; }
+@media (max-width: 575px) {
+  .hero { padding: 26px 23px; }
+  .hero-icon { display: none; }
+  .panel { padding: 20px; }
+  .current-card { padding: 22px; }
+  .queue-footer { align-items: flex-start; }
+}
+"""
+
+js = """const STORAGE_KEY = "queueEaseDemo_v1";
+
+let state = {
+  nextNumber: 1,
+  waiting: [],
+  current: null
+};
+
+const serviceSelect = document.getElementById("service");
+const generateBtn = document.getElementById("generateBtn");
+const nextBtn = document.getElementById("nextBtn");
+const resetBtn = document.getElementById("resetBtn");
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) state = { ...state, ...JSON.parse(saved) };
+  } catch (error) {
+    console.warn("Could not load saved queue data.", error);
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function tokenLabel(number) {
+  return `Q${String(number).padStart(3, "0")}`;
+}
+
+function timeLabel(iso) {
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function render() {
+  document.getElementById("waitingCount").textContent = state.waiting.length;
+
+  const currentToken = document.getElementById("currentToken");
+  const currentService = document.getElementById("currentService");
+  if (state.current) {
+    currentToken.textContent = state.current.token;
+    currentService.textContent = state.current.service;
+  } else {
+    currentToken.textContent = "— — —";
+    currentService.textContent = "No token being served";
+  }
+
+  nextBtn.disabled = state.waiting.length === 0;
+
+  const queueList = document.getElementById("queueList");
+  if (state.waiting.length === 0) {
+    queueList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">✓</div>
+        <strong>All clear!</strong>
+        <p class="mb-0">There are no tokens waiting right now.</p>
+      </div>`;
+  } else {
+    queueList.innerHTML = state.waiting.map((item, index) => `
+      <div class="queue-item">
+        <div class="queue-left">
+          <span class="queue-token">${item.token}</span>
+          <div>
+            <div class="queue-service">${escapeHTML(item.service)}</div>
+            <div class="queue-time">Generated at ${timeLabel(item.createdAt)}</div>
+          </div>
+        </div>
+        <span class="queue-position">#${index + 1} in line</span>
+      </div>`).join("");
+  }
+  saveState();
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+  }[char]));
+}
+
+generateBtn.addEventListener("click", () => {
+  const service = serviceSelect.value;
+  const token = tokenLabel(state.nextNumber);
+  const createdAt = new Date().toISOString();
+
+  state.waiting.push({ token, service, createdAt });
+  state.nextNumber += 1;
+
+  document.getElementById("newToken").textContent = token;
+  document.getElementById("ticketService").textContent = service;
+  document.getElementById("ticketTime").textContent = `Generated at ${timeLabel(createdAt)}`;
+  document.getElementById("ticketResult").classList.remove("d-none");
+
+  render();
+});
+
+nextBtn.addEventListener("click", () => {
+  if (state.waiting.length === 0) return;
+  state.current = state.waiting.shift();
+  render();
+});
+
+resetBtn.addEventListener("click", () => {
+  const confirmed = window.confirm("Reset the demo queue and start again?");
+  if (!confirmed) return;
+  state = { nextNumber: 1, waiting: [], current: null };
+  document.getElementById("ticketResult").classList.add("d-none");
+  render();
+});
+
+loadState();
+render();
+"""
+
+(base / "index.html").write_text(html, encoding="utf-8")
+(base / "style.css").write_text(css, encoding="utf-8")
+(base / "script.js").write_text(js, encoding="utf-8")
+
+zip_path = Path("/mnt/data/QueueEase_Queue_Token_Generator.zip")
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+    for p in base.iterdir():
+        z.write(p, arcname=p.name)
+
+print(f"Created: {zip_path}")
+print(f"Source files: {', '.join(p.name for p in base.iterdir())}")

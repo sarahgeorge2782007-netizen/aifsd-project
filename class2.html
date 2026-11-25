@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSS Keyframes Animation</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            padding: 30px;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .box {
+            width: 140px;
+            height: 140px;
+            background-color: rgb(240, 191, 128);
+            animation: myanimation 3s infinite alternate;
+        }
+
+        @keyframes myanimation {
+            0% {
+                transform: translateX(0);
+                background-color: lightcoral;
+            }
+
+            50% {
+                transform: translateX(150px);
+                background-color: lightblue;
+            }
+
+            100% {
+                transform: translateX(300px);
+                background-color: lightgreen;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>CSS Keyframes Animation</h2>
+
+    <div class="box"></div>
+
+</body>
+</html>

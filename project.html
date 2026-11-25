@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Library Book Manager — Problem 09</title>
+
+  <!-- Bootstrap 5 CSS & Icons -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+  />
+
+  <style>
+    :root {
+      --bg-canvas: #f4f6f9;
+      --surface-card: #ffffff;
+      --brand-primary: #1e3a5f;
+      --brand-accent: #2563eb;
+      --text-muted-custom: #5c6b7f;
+      --border-subtle: #e2e8f0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: #1a2433;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .navbar-brand-box {
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+      color: #fff;
+    }
+
+    .card-panel {
+      background-color: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
+
+    .stat-card {
+      border-radius: 0.75rem;
+      border: 1px solid var(--border-subtle);
+      background: var(--surface-card);
+      padding: 1rem 1.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .book-id-pill {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      background-color: #eef2f6;
+      color: #1e293b;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .status-badge {
+      font-weight: 600;
+      padding: 0.4em 0.65em;
+      border-radius: 0.4rem;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .empty-state {
+      padding: 3rem 1.5rem;
+      text-align: center;
+      color: var(--text-muted-custom);
+    }
+
+    .empty-state i {
+      font-size: 2.5rem;
+      opacity: 0.55;
+    }
+
+    @media (max-width: 767.98px) {
+      .table-responsive-stack thead {
+        display: none;
+      }
+      .table-responsive-stack tr {
+        display: block;
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.6rem;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        background: #fff;
+      }
+      .table-responsive-stack td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: none;
+        padding: 0.35rem 0;
+        text-align: right;
+      }
+      .table-responsive-stack td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted-custom);
+        text-align: left;
+        margin-right: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-brand-box shadow-sm">
+    <div class="container py-1">
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="#">
+        <i class="bi bi-journal-bookmark-fill fs-4"></i>
+        <span>Front-Desk Library Book Manager</span>
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          id="resetDemoBtn"
+          class="btn btn-sm btn-outline-light"
+          title="Restore initial sample books"
+        >
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Sample Data
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="container my-4 flex-grow-1">
+    <!-- Summary Strip -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-sm-4">
+        <div class="stat-card d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-secondary small fw-semibold text-uppercase">Total Catalogue</div>
+            <div id="totalCount" class="stat-value text-dark mt-1">0</div>
+          </div>
+          <i class="bi bi-collection fs-2 text-primary opacity-75"></i>
+        </div>
+      </div>
+      <div class="col-6 col-sm-4">
+        <div class="stat-card d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-secondary small fw-semibold text-uppercase">Available</div>
+            <div id="availableCount" class="stat-value text-success mt-1">0</div>
+          </div>
+          <i class="bi bi-check-circle fs-2 text-success opacity-75"></i>
+        </div>
+      </div>
+      <div class="col-6 col-sm-4">
+        <div class="stat-card d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-secondary small fw-semibold text-uppercase">Currently Issued</div>
+            <div id="issuedCount" class="stat-value text-warning-emphasis mt-1">0</div>
+          </div>
+          <i class="bi bi-person-check fs-2 text-warning opacity-75"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 align-items-start">
+      <!-- Left Column: Add Book Form -->
+      <div class="col-12 col-lg-4">
+        <section class="card-panel p-4" aria-labelledby="addBookHeading">
+          <h2 id="addBookHeading" class="h5 fw-bold mb-1">
+            <i class="bi bi-plus-circle-fill text-primary me-2"></i>Add New Book
+          </h2>
+          <p class="text-secondary small mb-3">
+            Enter a unique Book ID, title, and author to add to the shelf.
+          </p>
+
+          <div id="formFeedback" class="d-none" role="alert"></div>
+
+          <form id="addBookForm" novalidate>
+            <div class="mb-3">
+              <label for="bookIdInput" class="form-label fw-semibold">
+                Book ID <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="bookIdInput"
+                placeholder="e.g., BK-107"
+                required
+              />
+              <div class="form-text">Must be unique (case-insensitive).</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="bookTitleInput" class="form-label fw-semibold">
+                Book Title <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="bookTitleInput"
+                placeholder="e.g., Operating System Concepts"
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="bookAuthorInput" class="form-label fw-semibold">
+                Author <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="bookAuthorInput"
+                placeholder="e.g., Abraham Silberschatz"
+                required
+              />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">
+              <i class="bi bi-plus-lg me-1"></i>Add Book to Catalogue
+            </button>
+          </form>
+        </section>
+      </div>
+
+      <!-- Right Column: Search, Filter & Catalogue -->
+      <div class="col-12 col-lg-8">
+        <section class="card-panel p-4" aria-labelledby="catalogueHeading">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+            <div>
+              <h2 id="catalogueHeading" class="h5 fw-bold mb-0">Book Catalogue</h2>
+              <small class="text-secondary">Search by title, author, or ID, then issue or return books.</small>
+            </div>
+            <span id="visibleCountBadge" class="badge bg-secondary-subtle text-dark border align-self-start align-self-md-center">
+              Showing 0 books
+            </span>
+          </div>
+
+          <!-- Toast / Action Alert Area -->
+          <div id="actionAlert" class="d-none" role="alert"></div>
+
+          <!-- Search & Availability Filter -->
+          <div class="row g-2 mb-3">
+            <div class="col-12 col-md-7">
+              <label for="searchInput" class="visually-hidden">Search books by title or author</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search text-secondary"></i></span>
+                <input
+                  type="search"
+                  id="searchInput"
+                  class="form-control"
+                  placeholder="Search by title, author, or Book ID..."
+                />
+                <button
+                  type="button"
+                  id="clearSearchBtn"
+                  class="btn btn-outline-secondary d-none"
+                  aria-label="Clear search"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-5">
+              <div class="btn-group w-100" role="group" aria-label="Filter by availability">
+                <input type="radio" class="btn-check" name="statusFilter" id="filterAll" value="ALL" checked />
+                <label class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center" for="filterAll">All</label>
+
+                <input type="radio" class="btn-check" name="statusFilter" id="filterAvailable" value="AVAILABLE" />
+                <label class="btn btn-outline-success btn-sm d-flex align-items-center justify-content-center" for="filterAvailable">Available</label>
+
+                <input type="radio" class="btn-check" name="statusFilter" id="filterIssued" value="ISSUED" />
+                <label class="btn-outline-warning btn-sm d-flex align-items-center justify-content-center text-dark" for="filterIssued">Issued</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Books Table -->
+          <div class="table-responsive">
+            <table class="table table-hover align-middle table-responsive-stack mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">Book ID</th>
+                  <th scope="col">Title &amp; Author</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="text-end">Front-Desk Action</th>
+                </tr>
+              </thead>
+              <tbody id="bookTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Empty State -->
+          <div id="emptyState" class="empty-state d-none">
+            <i class="bi bi-bookshelf d-block mb-2"></i>
+            <p class="fw-semibold mb-1" id="emptyStateTitle">No matching books found</p>
+            <p class="small mb-3" id="emptyStateSubtitle">
+              Try adjusting your search query or availability filter, or add a new book on the left.
+            </p>
+            <button type="button" id="resetFiltersBtn" class="btn btn-sm btn-outline-primary">
+              Reset Search &amp; Filters
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Issue Book Modal -->
+  <div class="modal fade" id="issueModal" tabindex="-1" aria-labelledby="issueModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="issueForm">
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold" id="issueModalLabel">
+              <i class="bi bi-box-arrow-up-right text-primary me-2"></i>Issue Book
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="issueModalError" class="alert alert-danger d-none py-2 small" role="alert"></div>
+            <p class="mb-2">
+              You are issuing: <strong id="issueBookSummary"></strong>
+            </p>
+            <input type="hidden" id="issueBookIdHidden" />
+
+            <div class="mb-2">
+              <label for="borrowerNameInput" class="form-label fw-semibold small">
+                Member / Student Name (Demo)
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="borrowerNameInput"
+                placeholder="e.g., Ananya Rao (Optional)"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary fw-semibold">Confirm Issue</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-white border-top py-3 mt-auto">
+    <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center small text-secondary gap-1">
+      <span>Problem 09: Library Book Manager • Front-End Prototype</span>
+      <span>Saved automatically in browser <code>localStorage</code></span>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"
+  ></script>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "fsd_p09_library_books_v1";
+
+      const DEFAULT_BOOKS = [
+        {
+          id: "BK-101",
+          title: "Clean Code: A Handbook of Agile Software Craftsmanship",
+          author: "Robert C. Martin",
+          status: "AVAILABLE",
+          issuedTo: null,
+          issuedAt: null
+        },
+        {
+          id: "BK-102",
+          title: "Introduction to Algorithms",
+          author: "Thomas H. Cormen",
+          status: "ISSUED",
+          issuedTo: "Rohan Nair",
+          issuedAt: "2026-11-24"
+        },
+        {
+          id: "BK-103",
+          title: "Design Patterns: Elements of Reusable Object-Oriented Software",
+          author: "Erich Gamma",
+          status: "AVAILABLE",
+          issuedTo: null,
+          issuedAt: null
+        },
+        {
+          id: "BK-104",
+          title: "Computer Networks",
+          author: "Andrew S. Tanenbaum",
+          status: "AVAILABLE",
+          issuedTo: null,
+          issuedAt: null
+        },
+        {
+          id: "BK-105",
+          title: "Database System Concepts",
+          author: "Avi Silberschatz",
+          status: "ISSUED",
+          issuedTo: "Meera Krishnan",
+          issuedAt: "2026-11-25"
+        },
+        {
+          id: "BK-106",
+          title: "You Don't Know JS Yet: Get Started",
+          author: "Kyle Simpson",
+          status: "AVAILABLE",
+          issuedTo: null,
+          issuedAt: null
+        }
+      ];
+
+      // DOM References
+      const addBookForm = document.getElementById("addBookForm");
+      const bookIdInput = document.getElementById("bookIdInput");
+      const bookTitleInput = document.getElementById("bookTitleInput");
+      const bookAuthorInput = document.getElementById("bookAuthorInput");
+      const formFeedback = document.getElementById("formFeedback");
+
+      const searchInput = document.getElementById("searchInput");
+      const clearSearchBtn = document.getElementById("clearSearchBtn");
+      const resetFiltersBtn = document.getElementById("resetFiltersBtn");
+      const resetDemoBtn = document.getElementById("resetDemoBtn");
+
+      const bookTableBody = document.getElementById("bookTableBody");
+      const emptyState = document.getElementById("emptyState");
+      const actionAlert = document.getElementById("actionAlert");
+
+      const totalCountEl = document.getElementById("totalCount");
+      const availableCountEl = document.getElementById("availableCount");
+      const issuedCountEl = document.getElementById("issuedCount");
+      const visibleCountBadge = document.getElementById("visibleCountBadge");
+
+      const issueModalEl = document.getElementById("issueModal");
+      const issueModal = new bootstrap.Modal(issueModalEl);
+      const issueForm = document.getElementById("issueForm");
+      const issueBookSummary = document.getElementById("issueBookSummary");
+      const issueBookIdHidden = document.getElementById("issueBookIdHidden");
+      const borrowerNameInput = document.getElementById("borrowerNameInput");
+      const issueModalError = document.getElementById("issueModalError");
+
+      let books = [];
+      let alertTimeout = null;
+
+      function escapeHTML(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function loadBooks() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            saveBooks(DEFAULT_BOOKS);
+            return structuredClone(DEFAULT_BOOKS);
+          }
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) {
+            saveBooks(DEFAULT_BOOKS);
+            return structuredClone(DEFAULT_BOOKS);
+          }
+          return parsed;
+        } catch (err) {
+          console.error("Failed to load books from localStorage:", err);
+          return structuredClone(DEFAULT_BOOKS);
+        }
+      }
+
+      function saveBooks(list) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        } catch (err) {
+          console.error("Failed to save books to localStorage:", err);
+        }
+      }
+
+      function showFormAlert(type, message) {
+        formFeedback.className = `alert alert-${type} py-2 small mb-3`;
+        formFeedback.innerHTML = `<i class="bi ${
+          type === "danger" ? "bi-exclamation-triangle-fill" : "bi-check-circle-fill"
+        } me-1"></i>${escapeHTML(message)}`;
+      }
+
+      function clearFormAlert() {
+        formFeedback.className = "d-none";
+        formFeedback.textContent = "";
+      }
+
+      function showActionAlert(type, message) {
+        actionAlert.className = `alert alert-${type} alert-dismissible fade show py-2 small mb-3`;
+        actionAlert.innerHTML = `
+          <i class="bi ${
+            type === "danger" ? "bi-exclamation-octagon-fill" : "bi-info-circle-fill"
+          } me-1"></i>
+          <span>${escapeHTML(message)}</span>
+          <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        if (alertTimeout) clearTimeout(alertTimeout);
+        alertTimeout = setTimeout(() => {
+          actionAlert.className = "d-none";
+        }, 4500);
+      }
+
+      function getSelectedStatusFilter() {
+        const checked = document.querySelector('input[name="statusFilter"]:checked');
+        return checked ? checked.value : "ALL";
+      }
+
+      function getFilteredBooks() {
+        const query = searchInput.value.trim().toLowerCase();
+        const statusFilter = getSelectedStatusFilter();
+
+        return books.filter((book) => {
+          const matchesStatus =
+            statusFilter === "ALL" || book.status === statusFilter;
+
+          const matchesQuery =
+            !query ||
+            book.title.toLowerCase().includes(query) ||
+            book.author.toLowerCase().includes(query) ||
+            book.id.toLowerCase().includes(query);
+
+          return matchesStatus && matchesQuery;
+        });
+      }
+
+      function updateStats(filteredCount) {
+        const available = books.filter((b) => b.status === "AVAILABLE").length;
+        const issued = books.filter((b) => b.status === "ISSUED").length;
+
+        totalCountEl.textContent = String(books.length);
+        availableCountEl.textContent = String(available);
+        issuedCountEl.textContent = String(issued);
+
+        const noun = filteredCount === 1 ? "book" : "books";
+        visibleCountBadge.textContent = `Showing ${filteredCount} ${noun}`;
+      }
+
+      function renderCatalogue() {
+        clearSearchBtn.classList.toggle("d-none", searchInput.value.length === 0);
+
+        const filtered = getFilteredBooks();
+        updateStats(filtered.length);
+
+        if (filtered.length === 0) {
+          bookTableBody.innerHTML = "";
+          emptyState.classList.remove("d-none");
+          return;
+        }
+
+        emptyState.classList.add("d-none");
+
+        bookTableBody.innerHTML = filtered
+          .map((book) => {
+            const isAvailable = book.status === "AVAILABLE";
+
+            const statusBadge = isAvailable
+              ? `<span class="status-badge bg-success-subtle text-success border border-success-subtle">
+                   <i class="bi bi-check-circle-fill" aria-hidden="true"></i>Available
+                 </span>`
+              : `<span class="status-badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                   <i class="bi bi-clock-fill" aria-hidden="true"></i>Issued
+                 </span>`;
+
+            const issuedMeta =
+              !isAvailable && book.issuedTo
+                ? `<div class="small text-secondary mt-1">
+                     <i class="bi bi-person me-1"></i>Issued to: <strong>${escapeHTML(book.issuedTo)}</strong>
+                   </div>`
+                : "";
+
+            const actionButton = isAvailable
+              ? `<button
+                   type="button"
+                   class="btn btn-sm btn-outline-primary fw-semibold"
+                   data-action="issue"
+                   data-book-id="${escapeHTML(book.id)}"
+                 >
+                   <i class="bi bi-box-arrow-up-right me-1"></i>Issue Book
+                 </button>`
+              : `<button
+                   type="button"
+                   class="btn btn-sm btn-success fw-semibold"
+                   data-action="return"
+                   data-book-id="${escapeHTML(book.id)}"
+                 >
+                   <i class="bi bi-box-arrow-in-down me-1"></i>Return Book
+                 </button>`;
+
+            return `
+              <tr>
+                <td data-label="Book ID">
+                  <span class="book-id-pill">${escapeHTML(book.id)}</span>
+                </td>
+                <td data-label="Title & Author">
+                  <div class="fw-semibold text-dark">${escapeHTML(book.title)}</div>
+                  <div class="small text-secondary">by ${escapeHTML(book.author)}</div>
+                  ${issuedMeta}
+                </td>
+                <td data-label="Status">
+                  ${statusBadge}
+                </td>
+                <td data-label="Action" class="text-md-end">
+                  ${actionButton}
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+      }
+
+      // Add Book Handler
+      addBookForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        clearFormAlert();
+
+        const id = bookIdInput.value.trim();
+        const title = bookTitleInput.value.trim();
+        const author = bookAuthorInput.value.trim();
+
+        if (!id || !title || !author) {
+          showFormAlert("danger", "Please fill out Book ID, Book Title, and Author.");
+          return;
+        }
+
+        const duplicate = books.some(
+          (b) => b.id.toLowerCase() === id.toLowerCase()
+        );
+        if (duplicate) {
+          showFormAlert(
+            "danger",
+            `Book ID "${id}" already exists. Please enter a unique Book ID.`
+          );
+          bookIdInput.focus();
+          return;
+        }
+
+        const newBook = {
+          id,
+          title,
+          author,
+          status: "AVAILABLE",
+          issuedTo: null,
+          issuedAt: null
+        };
+
+        books.unshift(newBook);
+        saveBooks(books);
+        renderCatalogue();
+
+        addBookForm.reset();
+        bookIdInput.focus();
+        showFormAlert("success", `Added "${title}" (${id}) to the catalogue.`);
+        showActionAlert("success", `Book "${title}" added and marked Available.`);
+      });
+
+      // Table Action Delegation (Issue / Return)
+      bookTableBody.addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-action]");
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        const bookId = btn.dataset.bookId;
+        const book = books.find((b) => b.id === bookId);
+
+        if (!book) {
+          showActionAlert("danger", "Selected book could not be found.");
+          return;
+        }
+
+        if (action === "issue") {
+          if (book.status !== "AVAILABLE") {
+            showActionAlert(
+              "danger",
+              `Cannot issue "${book.title}" (${book.id}) because it is already issued.`
+            );
+            renderCatalogue();
+            return;
+          }
+          issueModalError.classList.add("d-none");
+          issueBookIdHidden.value = book.id;
+          issueBookSummary.textContent = `${book.title} (${book.id})`;
+          borrowerNameInput.value = "";
+          issueModal.show();
+          setTimeout(() => borrowerNameInput.focus(), 150);
+        } else if (action === "return") {
+          if (book.status !== "ISSUED") {
+            showActionAlert("warning", `"${book.title}" is already Available.`);
+            return;
+          }
+          book.status = "AVAILABLE";
+          book.issuedTo = null;
+          book.issuedAt = null;
+          saveBooks(books);
+          renderCatalogue();
+          showActionAlert("success", `Returned "${book.title}" (${book.id}). It is now Available.`);
+        }
+      });
+
+      // Confirm Issue Modal Handler
+      issueForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const bookId = issueBookIdHidden.value;
+        const book = books.find((b) => b.id === bookId);
+
+        if (!book) return;
+
+        if (book.status !== "AVAILABLE") {
+          issueModalError.textContent = `This book is already issued and cannot be issued again.`;
+          issueModalError.classList.remove("d-none");
+          return;
+        }
+
+        const borrower = borrowerNameInput.value.trim() || "Walk-in Member";
+        book.status = "ISSUED";
+        book.issuedTo = borrower;
+        book.issuedAt = new Date().toISOString().slice(0, 10);
+
+        saveBooks(books);
+        renderCatalogue();
+        issueModal.hide();
+        showActionAlert(
+          "info",
+          `Issued "${book.title}" (${book.id}) to ${borrower}.`
+        );
+      });
+
+      // Search & Filter Listeners
+      searchInput.addEventListener("input", renderCatalogue);
+      clearSearchBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        renderCatalogue();
+        searchInput.focus();
+      });
+
+      document.querySelectorAll('input[name="statusFilter"]').forEach((radio) => {
+        radio.addEventListener("change", renderCatalogue);
+      });
+
+      resetFiltersBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        document.getElementById("filterAll").checked = true;
+        renderCatalogue();
+      });
+
+      resetDemoBtn.addEventListener("click", () => {
+        books = structuredClone(DEFAULT_BOOKS);
+        saveBooks(books);
+        searchInput.value = "";
+        document.getElementById("filterAll").checked = true;
+        clearFormAlert();
+        renderCatalogue();
+        showActionAlert("info", "Sample library catalogue restored.");
+      });
+
+      // Initial Render
+      books = loadBooks();
+      renderCatalogue();
+    })();
+  </script>
+</body>
+</html>

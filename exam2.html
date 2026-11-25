@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>YouTube Carousel</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #171717;
+            color: white;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        /* Main Container */
+        .container {
+            border: 2px solid white;
+            border-radius: 14px;
+            min-height: 95vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            border: 2px solid white;
+            border-radius: 13px;
+            height: 320px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            font-size: 55px;
+        }
+
+        /* Cards Section */
+        .cards {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            padding: 0 0 30px;
+            flex-wrap: wrap;
+        }
+
+        /* Individual Cards */
+        .card {
+            border: 2px solid white;
+            border-radius: 13px;
+            width: 26%;
+            height: 360px;
+            padding: 35px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card h2 {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+
+        .card p {
+            font-size: 30px;
+        }
+
+        /* Watch Now Button */
+        .card button {
+            background-color: #23395d;
+            color: white;
+            border: 2px solid #bfc9d9;
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .card button:hover {
+            background-color: #4267a5;
+            transform: scale(1.05);
+        }
+
+        /* Footer */
+        footer {
+            border: 2px solid white;
+            border-radius: 13px;
+            min-height: 85px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: auto;
+            font-size: 35px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+
+            body {
+                padding: 12px;
+            }
+
+            header {
+                height: 200px;
+            }
+
+            header h1 {
+                font-size: 38px;
+            }
+
+            .cards {
+                justify-content: center;
+            }
+
+            .card {
+                width: 100%;
+                max-width: 350px;
+            }
+
+            footer {
+                font-size: 22px;
+                text-align: center;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- Header -->
+        <header>
+            <h1>Carousel</h1>
+        </header>
+
+        <!-- YouTube Cards -->
+        <section class="cards">
+
+            <!-- Card 1 -->
+            <div class="card">
+                <div>
+                    <h2>youtube</h2>
+                    <p>card</p>
+                </div>
+
+                <button onclick="window.open('https://www.youtube.com', '_blank')">
+                    watch now
+                </button>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="card">
+                <div>
+                    <h2>youtube</h2>
+                    <p>card</p>
+                </div>
+
+                <button onclick="window.open('https://www.youtube.com', '_blank')">
+                    watch now
+                </button>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="card">
+                <div>
+                    <h2>youtube</h2>
+                    <p>card</p>
+                </div>
+
+                <button onclick="window.open('https://www.youtube.com', '_blank')">
+                    watch now
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            copyright - Sarah George
+        </footer>
+
+    </div>
+
+</body>
+</html>
